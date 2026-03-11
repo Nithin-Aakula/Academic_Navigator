@@ -1,0 +1,17 @@
+.env
+venv/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.venv/
+db.sqlite3
+*.log
+.DS_Store
+.idea/
+.vscode/
+task.md.resolved
+implementation_plan.md.resolved

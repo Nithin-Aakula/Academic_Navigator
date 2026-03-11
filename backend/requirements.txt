@@ -1,0 +1,11 @@
+django>=4.2
+djangorestframework
+django-cors-headers
+djangorestframework-simplejwt
+django-environ
+channels
+pygad
+opencv-python
+face-recognition
+Pillow
+psycopg2-binary
