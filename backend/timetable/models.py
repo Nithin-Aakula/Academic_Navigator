@@ -3,6 +3,24 @@ from users.models import FacultyProfile
 from academics.models import Subject
 
 
+class ClassGroup(models.Model):
+    """
+    Represents a distinct class section, e.g. CSE-A, ECE-B.
+    The GA generates a separate timetable schedule for each ClassGroup.
+    """
+    name = models.CharField(max_length=30, unique=True, help_text="e.g. CSE-A, ECE-B")
+    department = models.CharField(max_length=80, default='General')
+    semester = models.PositiveSmallIntegerField(default=1)
+    room_name = models.CharField(max_length=60, blank=True, default='', help_text="Room/Lab identifier, e.g. L-DYNAMIC")
+    effective_date = models.DateField(null=True, blank=True, help_text="W.e.f. date shown on timetable header")
+
+    class Meta:
+        ordering = ['department', 'name']
+
+    def __str__(self):
+        return f"{self.name} (Sem {self.semester})"
+
+
 class Room(models.Model):
     name = models.CharField(max_length=50, unique=True)
     capacity = models.PositiveIntegerField(default=60)
@@ -17,19 +35,30 @@ class TimeSlot(models.Model):
         (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
         (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'),
     ]
+    SLOT_LABEL_CHOICES = [
+        ('', 'Normal Period'),
+        ('break', 'Break'),
+        ('lunch', 'Lunch'),
+        ('club', 'Club Activities'),
+    ]
     day = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
     period = models.PositiveSmallIntegerField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    is_locked = models.BooleanField(default=False, help_text="Locked slots cannot be scheduled (e.g., global lunch, maintenance)")
+    is_locked = models.BooleanField(default=False, help_text="Locked slots cannot be scheduled")
+    slot_label = models.CharField(
+        max_length=10, choices=SLOT_LABEL_CHOICES, default='',
+        blank=True, help_text="Special label: break, lunch, or club activities"
+    )
 
     class Meta:
         unique_together = ('day', 'period')
         ordering = ['day', 'period']
 
     def __str__(self):
+        label = f" [{self.slot_label.upper()}]" if self.slot_label else ''
         lock_status = " 🔒" if self.is_locked else ""
-        return f"{self.get_day_display()} P{self.period} ({self.start_time}–{self.end_time}){lock_status}"
+        return f"{self.get_day_display()} P{self.period} ({self.start_time}–{self.end_time}){label}{lock_status}"
 
 
 class TimetableEntry(models.Model):
@@ -39,12 +68,18 @@ class TimetableEntry(models.Model):
     timeslot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='entries')
     semester = models.PositiveSmallIntegerField()
     academic_year = models.CharField(max_length=9, default='2025-26')
+    class_group = models.ForeignKey(
+        ClassGroup, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='timetable_entries',
+        help_text="The class section this entry belongs to (e.g. CSE-A)"
+    )
 
     class Meta:
-        unique_together = ('timeslot', 'room', 'academic_year')
+        ordering = ['timeslot__day', 'timeslot__period']
 
     def __str__(self):
-        return f"{self.semester}sem | {self.subject.code} | {self.room} | {self.timeslot}"
+        grp = self.class_group.name if self.class_group else f"Sem{self.semester}"
+        return f"{grp} | {self.subject.code} | {self.room} | {self.timeslot}"
 
 
 class ConstraintConfig(models.Model):

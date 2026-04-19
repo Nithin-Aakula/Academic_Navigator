@@ -17,7 +17,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'role', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'password']
+        read_only_fields = ['id']
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -41,10 +42,24 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
 class FacultyProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    # Write-only integer: pass the user's PK when creating a profile
+    user_pk = serializers.IntegerField(write_only=True, required=False)
+    subjects_count = serializers.SerializerMethodField()
 
     class Meta:
         model = FacultyProfile
-        fields = ['id', 'user', 'department', 'max_hours_per_week']
+        fields = ['id', 'user', 'user_pk', 'department', 'max_hours_per_week', 'subjects_count']
+
+    def get_subjects_count(self, obj):
+        return obj.subjects.count()
+
+    def create(self, validated_data):
+        user_pk_value = validated_data.pop('user_pk', None)
+        instance = FacultyProfile(**validated_data)
+        if user_pk_value is not None:
+            instance.user_id = user_pk_value
+        instance.save()
+        return instance
 
 
 class ParentProfileSerializer(serializers.ModelSerializer):

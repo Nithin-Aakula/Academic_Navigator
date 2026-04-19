@@ -12,6 +12,10 @@ class Subject(models.Model):
     semester = models.PositiveSmallIntegerField()
     max_students = models.PositiveIntegerField(default=60)
     credits = models.PositiveSmallIntegerField(default=3)
+    is_special = models.BooleanField(
+        default=False,
+        help_text="Mark as True for Library/Sports — GA enforces exactly 2 sessions per week per class."
+    )
 
     def __str__(self):
         return f"{self.code} — {self.name}"

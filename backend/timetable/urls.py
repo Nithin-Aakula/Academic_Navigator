@@ -1,8 +1,13 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import RoomViewSet, TimeSlotViewSet, TimetableEntryViewSet, generate_timetable, get_generation_progress, validate_timetable_move
+from .views import (
+    ClassGroupViewSet, RoomViewSet, TimeSlotViewSet,
+    TimetableEntryViewSet, generate_timetable,
+    get_generation_progress, validate_timetable_move
+)
 
 router = DefaultRouter()
+router.register(r'class-groups', ClassGroupViewSet)
 router.register(r'rooms', RoomViewSet)
 router.register(r'timeslots', TimeSlotViewSet)
 router.register(r'timetable', TimetableEntryViewSet)

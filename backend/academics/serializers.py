@@ -1,13 +1,20 @@
 from rest_framework import serializers
+from users.models import FacultyProfile
 from .models import Subject, Marks, AttendanceLog, Backlog, Complaint
 
 
 class SubjectSerializer(serializers.ModelSerializer):
-    faculty_name = serializers.CharField(source='faculty.user.get_full_name', read_only=True)
+    faculty_name = serializers.CharField(source='faculty.user.get_full_name', read_only=True, default='')
+    # Allow null so PATCH requests can assign OR unassign faculty
+    faculty = serializers.PrimaryKeyRelatedField(
+        queryset=FacultyProfile.objects.all(),
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Subject
-        fields = ['id', 'code', 'name', 'faculty', 'faculty_name', 'semester', 'max_students', 'credits']
+        fields = ['id', 'code', 'name', 'faculty', 'faculty_name', 'semester', 'max_students', 'credits', 'is_special']
 
 
 class MarksSerializer(serializers.ModelSerializer):
